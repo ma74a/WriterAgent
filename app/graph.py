@@ -12,6 +12,15 @@ from app.nodes.code import code_generator
 from app.nodes.images import image_handler
 from app.nodes.assembler import blog_assembler
 
+from langgraph.constants import Send
+
+def dispatch_parallel(state: BlogState):
+    return [
+        Send("content_generator", state),
+        Send("code_generator", state),
+        Send("image_handler", state),
+    ]
+
 
 
 def build_graph():
@@ -28,9 +37,16 @@ def build_graph():
     graph.add_edge(START, "prompt_analyzer")
     graph.add_edge("prompt_analyzer", "web_searcher")
     graph.add_edge("web_searcher", "blog_planner")
-    graph.add_edge("blog_planner", "content_generator")
-    graph.add_edge("blog_planner", "code_generator")
-    graph.add_edge("blog_planner", "image_handler")
+
+    # graph.add_edge("blog_planner", "content_generator")
+    # graph.add_edge("blog_planner", "code_generator")
+    # graph.add_edge("blog_planner", "image_handler")
+    # Conditional edge routing via Send
+    graph.add_conditional_edges(
+        "blog_planner",
+        dispatch_parallel,
+        ["content_generator", "code_generator", "image_handler"]
+    )
     graph.add_edge("content_generator", "blog_assembler")
     graph.add_edge("code_generator", "blog_assembler")
     graph.add_edge("image_handler", "blog_assembler")
