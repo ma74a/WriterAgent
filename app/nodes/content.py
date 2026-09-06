@@ -30,6 +30,8 @@ def generate_section(
         - Do not include a conclusion unless this is the conclusion section.
         - Do not invent facts.
         - Use Markdown where appropriate.
+
+        Return only the structured section.
         """
 
     user_prompt = f"""
@@ -61,9 +63,25 @@ def generate_section(
 
 def content_generator(state: BlogState):
     analysis = state["analysis"]
-    plan = state["plan"]
+    plan = state["plan"] # BlogPlan
 
     generated_content = {}
+
+    # Introduction
+    introduction_section = BlogSection(
+        title="Introduction",
+        description=plan.introduction,
+        needs_code=False,
+        needs_image=False
+    )
+    introduction = generate_section(
+        section=introduction_section,
+        topic=analysis.topic,
+        audience=analysis.audience,
+        tone=analysis.tone
+    )
+    generated_content["Introduction"] = introduction.content
+
     for section in plan.sections:
         print(f"\nGenerating section: {section.title}")
         result = generate_section(
@@ -73,6 +91,21 @@ def content_generator(state: BlogState):
             tone=analysis.tone
         )
         generated_content[section.title] = result.content
+
+    # conclusion
+    conclusion_section = BlogSection(
+        title="Conclusion",
+        description=plan.conclusion,
+        needs_code=False,
+        needs_image=False
+    )
+    conclusion = generate_section(
+        section=conclusion_section,
+        topic=analysis.topic,
+        audience=analysis.audience,
+        tone=analysis.tone
+    )
+    generated_content["Conclusion"] = conclusion.content
 
     return {
         "content": generated_content
