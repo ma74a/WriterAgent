@@ -31,7 +31,7 @@ class GeneratedCode(BaseModel):
     section_title: str = Field(description="The blog section this code belongs to")
     language: str = Field(description="Programming language used by the code")
     explanation: str = Field(description="Short explanation of what the code demonstrates")
-    dependencies: str = Field(description="Packages or dependencies required to run the code")
+    dependencies: list[str] = Field(description="Packages or dependencies required to run the code")
     code: str = Field(description="The actual runnable code")
 
 class ResearchSource(BaseModel):
