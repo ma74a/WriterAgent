@@ -1,68 +1,65 @@
+from langchain_core.messages import SystemMessage, HumanMessage
 from app.state import BlogState
 from app.schemas import BlogPlan, BlogSection
+from app.llm import llm
+
+planner_llm = llm.with_structured_output(
+    BlogPlan
+)
 
 
 def blog_planner(state: BlogState):
 
     analysis = state["analysis"]
 
-    print("\nCreating blog plan...")
-    print(f"Topic: {analysis.topic}")
+    system_prompt = """
+        You are the Blog Planner for a professional AI Writer Agent.
 
-    plan = BlogPlan(
-        title="Retrieval-Augmented Generation (RAG): A Beginner's Guide",
+        Create a detailed blueprint for a blog post.
 
-        introduction=(
-            "Introduce RAG and explain why combining retrieval "
-            "with language models is useful."
-        ),
+        Your plan should:
 
-        sections=[
-            BlogSection(
-                title="What is RAG?",
-                description=(
-                    "Explain Retrieval-Augmented Generation "
-                    "in simple terms."
-                ),
-                needs_code=False,
-                needs_image=True,
-            ),
+        - Create an engaging and accurate title.
+        - Define a useful introduction.
+        - Break the topic into logical sections.
+        - Make each section useful to the target audience.
+        - Identify sections that require code.
+        - Identify sections that benefit from images or diagrams.
+        - Create a useful conclusion.
 
-            BlogSection(
-                title="How RAG Works",
-                description=(
-                    "Explain the retrieval, context augmentation, "
-                    "and generation pipeline."
-                ),
-                needs_code=False,
-                needs_image=True,
-            ),
+        Do NOT write the complete blog post.
 
-            BlogSection(
-                title="Building a Simple RAG System with Python",
-                description=(
-                    "Show how to build a basic RAG pipeline using Python."
-                ),
-                needs_code=True,
-                needs_image=False,
-            ),
+        Create a blueprint that downstream content, code, and image
+        agents can use.
+        """
 
-            BlogSection(
-                title="Advantages and Limitations",
-                description=(
-                    "Discuss the main benefits and challenges of RAG."
-                ),
-                needs_code=False,
-                needs_image=False,
-            ),
-        ],
+    user_prompt = f"""
+        Create a blog plan using the following analysis:
 
-        conclusion=(
-            "Summarize the main ideas and explain when RAG "
-            "is useful."
-        ),
-    )
+        Topic:
+        {analysis.topic}
+
+        Audience:
+        {analysis.audience}
+
+        Tone:
+        {analysis.tone}
+
+        Needs code:
+        {analysis.needs_code}
+
+        Needs images:
+        {analysis.needs_images}
+
+        Target word count:
+        {analysis.word_count}
+        """
+
+    result = planner_llm.invoke([
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_prompt),
+        ])
 
     return {
-        "plan": plan
+        "plan": result
     }
