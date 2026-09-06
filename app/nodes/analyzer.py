@@ -28,7 +28,7 @@ def prompt_analyzer(state: BlogState):
 
         Only analyze the request and return the structured analysis.
         """
-    result = llm.invoke([
+    result = analyzer_llm.invoke([
         SystemMessage(content=system_prompt),
         HumanMessage(content=user_prompt),
     ])
