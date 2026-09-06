@@ -109,12 +109,12 @@ def blog_assembler(state: BlogState):
                         + "*"
                     )
 
-    else:
+                else:
 
-        parts.append(
-            f"<!-- Image unavailable: "
-            f"{image.get('description', '')} -->"
-        )
+                    parts.append(
+                        f"<!-- Image unavailable: "
+                        f"{image.get('description', '')} -->"
+                    )
 
     # Conclusion
     if "Conclusion" in content:
