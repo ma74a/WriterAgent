@@ -1,7 +1,8 @@
 from typing import TypedDict
 from app.schemas import (
     PromptAnalysis,
-    BlogPlan
+    BlogPlan,
+    ResearchContext
 )
 
 
@@ -9,8 +10,11 @@ class BlogState(TypedDict):
     # user input
     user_prompt: str
 
-    # Prompt analysis
+    # Analysis
     analysis: PromptAnalysis
+
+    # Research
+    research: ResearchContext
 
     # Planner
     plan: BlogPlan
@@ -21,7 +25,7 @@ class BlogState(TypedDict):
     images: dict
 
     # Final output
-    final_output: str
+    final_blog: str
 
     # Review
     review: str
