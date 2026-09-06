@@ -27,3 +27,9 @@ class GeneratedSection(BaseModel):
     title: str = Field(description="The title of generated Section")
     content: str = Field(description="The content of the generated section")
 
+class GeneratedCode(BaseModel):
+    section_title: str = Field(description="The blog section this code belongs to")
+    language: str = Field(description="Programming language used by the code")
+    explanation: str = Field(description="Short explanation of what the code demonstrates")
+    dependencies: str = Field(description="Packages or dependencies required to run the code")
+    code: str = Field(description="The actual runnable code")
