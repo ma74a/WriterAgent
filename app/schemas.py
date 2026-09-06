@@ -22,3 +22,8 @@ class BlogPlan(BaseModel):
     introduction: str = Field(description="What the introduction should cover")
     sections: list[BlogSection] = Field(description="The sections that make up the blog")
     conclusion: str = Field(description="What the conclusion should cover")
+
+class GeneratedSection(BaseModel):
+    title: str = Field(description="The title of generated Section")
+    content: str = Field(description="The content of the generated section")
+
