@@ -64,15 +64,15 @@ def blog_assembler(state: BlogState):
                 f"```"
             )
 
-    # Images
-    if title in images:
-        image = images[title]
-        parts.append(
-            "### Diagram"
-        )
-        parts.append(
-            f"<!-- Image: {image['description']} -->"
-        )
+        # Images
+        if title in images:
+            image = images[title]
+            parts.append(
+                "### Diagram"
+            )
+            parts.append(
+                f"<!-- Image: {image['description']} -->"
+            )
 
     # Conclusion
     if "Conclusion" in content:
