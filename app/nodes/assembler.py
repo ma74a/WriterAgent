@@ -66,13 +66,55 @@ def blog_assembler(state: BlogState):
 
         # Images
         if title in images:
+
             image = images[title]
-            parts.append(
-                "### Diagram"
-            )
-            parts.append(
-                f"<!-- Image: {image['description']} -->"
-            )
+
+            if image["status"] == "downloaded":
+
+                parts.append(
+                    f"![{title}]({image['path']})"
+                )
+
+                creator = image.get("creator")
+                source = image.get("source")
+                license_name = image.get("license")
+                source_url = image.get("source_url")
+
+                attribution = []
+
+                if creator:
+                    attribution.append(
+                        f"Creator: {creator}"
+                    )
+
+                if source:
+                    attribution.append(
+                        f"Source: {source}"
+                    )
+
+                if license_name:
+                    attribution.append(
+                        f"License: {license_name}"
+                    )
+
+                if source_url:
+                    attribution.append(
+                        f"[View original]({source_url})"
+                    )
+
+                if attribution:
+                    parts.append(
+                        "*"
+                        + " · ".join(attribution)
+                        + "*"
+                    )
+
+    else:
+
+        parts.append(
+            f"<!-- Image unavailable: "
+            f"{image.get('description', '')} -->"
+        )
 
     # Conclusion
     if "Conclusion" in content:
