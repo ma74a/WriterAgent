@@ -33,3 +33,19 @@ class GeneratedCode(BaseModel):
     explanation: str = Field(description="Short explanation of what the code demonstrates")
     dependencies: str = Field(description="Packages or dependencies required to run the code")
     code: str = Field(description="The actual runnable code")
+
+class ResearchSource(BaseModel):
+    title: str = Field(description="Title of the web source")
+    url: str = Field(description="Url of web source")
+    content: str = Field(description="Relevant content returned by the search engine")
+    score: float = Field(description="Relevance score returned by the search engine")
+
+
+class ResearchResult(BaseModel):
+    query: str = Field(description="The search query used")
+    sources: list[ResearchSource] = Field(description="Sources returns by the search engine")
+
+class ResearchContext(BaseModel):
+    results: list[ResearchResult] = Field(
+        description="All web research results"
+    )
