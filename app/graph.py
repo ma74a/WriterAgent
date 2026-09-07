@@ -35,8 +35,10 @@ def build_graph():
     graph.add_node("blog_assembler", blog_assembler)
     
     graph.add_edge(START, "prompt_analyzer")
-    graph.add_edge("prompt_analyzer", "web_searcher")
-    graph.add_edge("web_searcher", "blog_planner")
+    # graph.add_edge("prompt_analyzer", "web_searcher")
+    # graph.add_edge("web_searcher", "blog_planner")
+    graph.add_edge("prompt_analyzer", "blog_planner")
+    graph.add_edge("blog_planner", "web_searcher")
 
     # graph.add_edge("blog_planner", "content_generator")
     # graph.add_edge("blog_planner", "code_generator")
