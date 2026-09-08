@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WriterAgent AI — Technical Blog Studio</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✍️</text></svg>">
+  
+  <!-- Highlight.js VS Code Dark Theme stylesheet -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  
+  <!-- Marked.js & Highlight.js -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+        </svg>
+      </div>
+      <h1 class="brand-title">WriterAgent AI</h1>
+    </div>
+
+    <div class="header-controls">
+      <button class="btn-secondary" id="btn-open-research">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        Tavily Search
+      </button>
+
+      <div class="status-badge" id="health-badge">
+        <span class="status-dot"></span>
+        <span id="health-text">Checking API...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout (Fits Screen) -->
+  <div class="app-container">
+    
+    <!-- Sidebar: History & Saved Blogs -->
+    <aside class="sidebar">
+      <div class="sidebar-section-header">
+        <span class="sidebar-title">Article History</span>
+        <button class="btn-secondary" id="btn-refresh-history" style="padding: 2px 6px; font-size: 0.72rem;">
+          Refresh
+        </button>
+      </div>
+
+      <div class="history-list" id="history-list">
+        <div style="color: var(--text-muted); font-size: 0.8rem; padding: 10px; text-align: center;">
+          Loading history...
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-workspace">
+      
+      <!-- Prompt Studio Card -->
+      <section class="glass-card">
+        <h2 class="hero-title">Create Technical Articles</h2>
+        <p class="hero-subtitle">Enter a prompt to analyze, research the web, structure, generate code, find images, and assemble a complete blog post.</p>
+
+        <div class="prompt-box">
+          <textarea 
+            class="prompt-textarea" 
+            id="prompt-input" 
+            placeholder="e.g. Write a beginner-friendly article about RAG with Python..."
+          ></textarea>
+
+          <div class="prompt-presets">
+            <span class="preset-title">Presets:</span>
+            <button class="preset-pill" data-prompt="Write a beginner-friendly article about RAG with Python">RAG with Python</button>
+            <button class="preset-pill" data-prompt="Write a guide explaining YOLO object detection architecture with Python code examples">YOLO Object Detection</button>
+            <button class="preset-pill" data-prompt="Write a guide on FastAPI async architecture and Pydantic validation best practices">FastAPI Microservices</button>
+            <button class="preset-pill" data-prompt="Write a technical guide on building multi-agent AI systems with LangGraph">LangGraph Multi-Agent</button>
+          </div>
+
+          <div class="prompt-actions">
+            <label class="stream-toggle-wrapper">
+              <input type="checkbox" id="stream-toggle" class="toggle-checkbox" checked>
+              <span>Live Node Streaming (SSE)</span>
+            </label>
+
+            <button class="btn-primary" id="btn-generate">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              Generate Article
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Execution Progress Terminal -->
+      <section class="stream-terminal" id="stream-terminal">
+        <div class="terminal-header">
+          <div class="terminal-title">
+            <svg class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"></circle>
+            </svg>
+            <span id="terminal-status-text">Agent Working...</span>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);" id="job-id-display"></span>
+        </div>
+
+        <div class="pipeline-nodes" id="pipeline-nodes">
+          <div class="node-chip" id="node-prompt_analyzer">🔍 Analyzer</div>
+          <div class="node-chip" id="node-blog_planner">📋 Planner</div>
+          <div class="node-chip" id="node-web_searcher">🌐 Researcher</div>
+          <div class="node-chip" id="node-generators">⚡ Generators</div>
+          <div class="node-chip" id="node-blog_assembler">🛠️ Assembler</div>
+        </div>
+
+        <div class="terminal-log-box" id="terminal-logs">
+          <div>[System] Initializing LangGraph workflow stream...</div>
+        </div>
+      </section>
+
+      <!-- Blog Output Workspace -->
+      <section class="blog-workspace" id="blog-workspace">
+        <div class="workspace-header">
+          <div>
+            <h2 class="blog-meta-title" id="active-blog-title">Generated Article</h2>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;" id="active-blog-date"></div>
+          </div>
+
+          <div class="workspace-actions">
+            <button class="btn-secondary" id="btn-copy-md">Copy MD</button>
+            <button class="btn-secondary" id="btn-download-md">Download</button>
+            <button class="btn-secondary" id="btn-open-html-window">Raw HTML</button>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs-nav">
+          <button class="tab-btn active" data-tab="pane-article">📄 Article Render</button>
+          <button class="tab-btn" data-tab="pane-analysis">📊 Analysis & Plan</button>
+          <button class="tab-btn" data-tab="pane-images">🖼️ Images Gallery</button>
+          <button class="tab-btn" data-tab="pane-code">💻 Code Snippets</button>
+          <button class="tab-btn" data-tab="pane-markdown">📝 Raw Markdown</button>
+        </div>
+
+        <!-- Tab Panes -->
+        <div class="tab-content">
+          <!-- Article Render Pane -->
+          <div class="tab-pane active" id="pane-article">
+            <article class="markdown-body" id="article-container"></article>
+          </div>
+
+          <!-- Analysis & Plan Pane -->
+          <div class="tab-pane" id="pane-analysis">
+            <div class="analysis-grid" id="analysis-metrics-grid"></div>
+            <div class="glass-card">
+              <h3 style="font-family: var(--font-heading); margin-bottom: 14px; font-size: 1.1rem;">Structured Section Outline</h3>
+              <div id="plan-sections-list"></div>
+            </div>
+          </div>
+
+          <!-- Images Gallery Pane -->
+          <div class="tab-pane" id="pane-images">
+            <div class="images-grid" id="images-container"></div>
+          </div>
+
+          <!-- Code Snippets Pane -->
+          <div class="tab-pane" id="pane-code">
+            <div style="display: flex; flex-direction: column; gap: 16px;" id="code-blocks-container"></div>
+          </div>
+
+          <!-- Raw Markdown Pane -->
+          <div class="tab-pane" id="pane-markdown">
+            <div id="raw-markdown-vscode-wrapper"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Direct Web Research Modal -->
+  <div class="modal-overlay" id="research-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" style="font-size: 1.1rem;">Tavily Web Search</h3>
+        <button class="modal-close" id="btn-close-research">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 10px;">
+          <input 
+            type="text" 
+            id="research-query-input" 
+            class="prompt-textarea" 
+            style="min-height: 40px; height: 40px; padding: 8px 14px;" 
+            placeholder="Search query..."
+          >
+          <button class="btn-primary" id="btn-run-research" style="white-space: nowrap;">Search</button>
+        </div>
+
+        <div id="research-results-container" style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">
+            Enter a query above to execute Tavily search directly.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- JavaScript logic -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
