@@ -1,177 +1,97 @@
 import re
+from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app.state import BlogState
-from app.image_search import OpenverseImageSearch
+from app.nodes.diagram import generate_diagram, save_diagram
 
 
-image_search = OpenverseImageSearch()
+# Absolute output dir — safe regardless of where the process is launched from
+OUTPUT_DIR = Path(__file__).parent.parent.parent / "output" / "images"
 
 
-def create_image_query(
-    topic: str,
-    section_title: str,
-    description: str,
-):
+def create_filename(section_title: str) -> str:
     """
-    Create a concise search query for the image.
-    """
-
-    return (
-        f"{topic} "
-        f"{section_title} "
-        f"{description}"
-    )
-
-
-def create_filename(section_title: str):
-    """
-    Convert section title into a safe filename.
+    Convert a section title into a safe, slug-style filename (no extension).
     """
 
     filename = section_title.lower()
+    filename = re.sub(r"[^a-z0-9]+", "-", filename)
+    return filename.strip("-")
 
-    filename = re.sub(
-        r"[^a-z0-9]+",
-        "-",
-        filename,
+
+def fetch_diagram_for_section(section, topic: str) -> tuple[str, dict]:
+    """
+    Generate and save an LLM SVG diagram for a single section.
+    Returns (section_title, image_result_dict).
+    Designed to run inside a thread pool.
+    """
+
+    print(f"\nGenerating diagram: {section.title!r}")
+
+    filename = create_filename(section.title)
+
+    svg = generate_diagram(
+        topic=topic,
+        section_title=section.title,
+        description=section.description,
     )
 
-    filename = filename.strip("-")
+    if not svg:
+        print(f"Diagram generation failed for: {section.title!r}")
+        return section.title, {
+            "status":      "error",
+            "type":        "diagram",
+            "description": section.description,
+            "error":       "LLM returned invalid or empty SVG.",
+        }
 
-    return filename
+    saved_path = save_diagram(svg, filename, OUTPUT_DIR)
+
+    print(f"Diagram saved: {saved_path}")
+
+    return section.title, {
+        "status":   "downloaded",
+        "type":     "diagram",
+        "filename": saved_path.name,
+        "path":     f"images/{saved_path.name}",
+        "source":   "AI-generated diagram",
+    }
 
 
 def image_handler(state: BlogState):
 
     analysis = state["analysis"]
-    plan = state["plan"]
+    plan     = state["plan"]
 
-    images = {}
+    # Only process sections that need an image
+    sections_needing_images = [s for s in plan.sections if s.needs_image]
 
-    for section in plan.sections:
+    images: dict[str, dict] = {}
 
-        if not section.needs_image:
-            continue
+    if not sections_needing_images:
+        return {"images": [images]}
 
-        print(
-            f"\nSearching image: {section.title}"
-        )
+    # Generate all diagrams in parallel — one thread per section
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            executor.submit(fetch_diagram_for_section, section, analysis.topic): section
+            for section in sections_needing_images
+        }
 
-        query = create_image_query(
-            topic=analysis.topic,
-            section_title=section.title,
-            description=section.description,
-        )
-
-        try:
-
-            results = image_search.search(
-                query=query,
-                page_size=5,
-            )
-
-            if not results:
-                print(
-                    f"No images found for: "
-                    f"{section.title}"
-                )
-
+        for future in as_completed(futures):
+            section = futures[future]
+            try:
+                title, result = future.result()
+                images[title] = result
+            except Exception as e:
+                print(f"Diagram generation failed for {section.title!r}: {e}")
                 images[section.title] = {
-                    "status": "not_found",
-                    "query": query,
+                    "status":      "error",
+                    "type":        "diagram",
                     "description": section.description,
+                    "error":       str(e),
                 }
 
-                continue
-
-            # For now, use the first result.
-            selected = results[0]
-
-            filename = create_filename(
-                section.title
-            )
-
-            output_path = (
-                f"output/images/"
-                f"{filename}.jpg"
-            )
-
-            local_file = image_search.download(
-                image=selected,
-                output_path=output_path,
-            )
-
-            images[section.title] = {
-                "status": "downloaded",
-
-                "query": query,
-
-                "title": selected.get(
-                    "title"
-                ),
-
-                "url": selected.get(
-                    "url"
-                ),
-
-                "source": selected.get(
-                    "source"
-                ),
-
-                "provider": selected.get(
-                    "provider"
-                ),
-
-                "license": selected.get(
-                    "license"
-                ),
-
-                "license_version": selected.get(
-                    "license_version"
-                ),
-
-                "license_url": selected.get(
-                    "license_url"
-                ),
-
-                "creator": selected.get(
-                    "creator"
-                ),
-
-                "creator_url": selected.get(
-                    "creator_url"
-                ),
-
-                "source_url": selected.get(
-                    "foreign_landing_url"
-                ),
-
-                "filename": local_file.name,
-
-                "path": (
-                    f"images/"
-                    f"{local_file.name}"
-                ),
-            }
-
-            print(
-                f"Downloaded: {local_file}"
-            )
-
-        except Exception as e:
-
-            print(
-                f"Image search failed for "
-                f"{section.title}: {e}"
-            )
-
-            images[section.title] = {
-                "status": "error",
-                "query": query,
-                "description": section.description,
-                "error": str(e),
-            }
-
-    return {
-        "images": images
-    }
+    # Wrap in list to satisfy the Annotated[list[dict], operator.add] reducer
+    return {"images": [images]}

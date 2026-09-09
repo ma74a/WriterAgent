@@ -70,46 +70,35 @@ def generate_section(
         """
 
     result = writer_llm.invoke([
-        HumanMessage(content=user_prompt),
-        SystemMessage(content=system_prompt)
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=user_prompt)
     ])
 
     return result
 
 def format_research(research, max_sources=6, max_chars=6000):
-
     if not research:
         return "No web research available."
 
-    sources = []
-
-    for result in research.results:
-        for source in result.sources:
-            sources.append(source)
-
-    sources.sort(
-        key=lambda source: source.score,
+    sources = sorted(
+        [s for r in research.results for s in r.sources],
+        key=lambda s: s.score,
         reverse=True
-    )
-
-    selected_sources = sources[:max_sources]
+    )[:max_sources]
 
     research_text = ""
+    total_chars = 0
 
-    for source in selected_sources:
-
-        content = source.content[:max_chars]
-
-        research_text += f"""
-            SOURCE: {source.title}
-            URL: {source.url}
-
-            {content}
-
-            ---
-            """
+    for source in sources:
+        remaining = max_chars - total_chars
+        if remaining <= 0:
+            break
+        content = source.content[:remaining]
+        total_chars += len(content)
+        research_text += f"SOURCE: {source.title}\nURL: {source.url}\n\n{content}\n\n---\n"
 
     return research_text
+
 
 def content_generator(state: BlogState):
     analysis = state["analysis"]
@@ -165,5 +154,5 @@ def content_generator(state: BlogState):
     generated_content["Conclusion"] = conclusion.content
 
     return {
-        "content": generated_content
+        "content": [generated_content]
     }

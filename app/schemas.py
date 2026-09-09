@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Literal
 
 
 class PromptAnalysis(BaseModel):
@@ -15,6 +16,7 @@ class BlogSection(BaseModel):
     description: str = Field(description="What this section should explain")
     needs_code: bool = Field(description="Whether this section needs code")
     needs_image: bool = Field(description="Whether this section needs an image or diagram")
+    image_type: Literal["photo", "diagram"] = "photo"
 
 class BlogPlan(BaseModel):
     """tells us HOW we'll structure the blog"""

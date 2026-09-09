@@ -27,8 +27,3 @@ class TavilyWebSearch:
         )
 
         return response
-
-
-obj = TavilyClient()
-
-print(obj.search("What is YOLO?"))

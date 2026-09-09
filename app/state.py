@@ -1,4 +1,5 @@
-from typing import TypedDict
+from typing import TypedDict, Annotated
+import operator
 from app.schemas import (
     PromptAnalysis,
     BlogPlan,
@@ -20,9 +21,13 @@ class BlogState(TypedDict):
     plan: BlogPlan
 
     # Generated content
-    content: dict
-    code: dict
-    images: dict
+    # content: dict
+    # code: dict
+    # images: dict
+    # Generated content — reducers act as the fan-in barrier
+    content: Annotated[list[dict], operator.add]
+    code: Annotated[list[dict], operator.add]
+    images: Annotated[list[dict], operator.add]
 
     # Final output
     final_blog: str

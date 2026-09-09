@@ -45,7 +45,7 @@ def build_graph():
     # graph.add_edge("blog_planner", "image_handler")
     # Conditional edge routing via Send
     graph.add_conditional_edges(
-        "blog_planner",
+        "web_searcher",
         dispatch_parallel,
         ["content_generator", "code_generator", "image_handler"]
     )

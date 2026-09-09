@@ -51,8 +51,8 @@ def generate_code(
         """
 
     result = code_llm.invoke([
-        HumanMessage(content=user_prompt),
-        SystemMessage(content=system_prompt)
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=user_prompt)
     ])
 
     return result
@@ -76,5 +76,5 @@ def code_generator(state: BlogState):
         generated_code[section.title] = result
 
     return {
-        "code": generated_code
+        "code": [generated_code]
     }

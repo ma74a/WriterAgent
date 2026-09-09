@@ -1,4 +1,4 @@
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain_core.messages import SystemMessage, HumanMessage
 from app.state import BlogState
 from app.schemas import PromptAnalysis
 from app.llm import llm
