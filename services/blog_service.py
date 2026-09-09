@@ -19,6 +19,16 @@ def to_dict(val: Any) -> Any:
     return val
 
 
+def extract_dict(val: Any) -> dict:
+    """Extract a dictionary from state, unwrapping list reducer structures if present."""
+    d = to_dict(val)
+    if isinstance(d, list) and len(d) > 0:
+        return d[0] if isinstance(d[0], dict) else {}
+    if isinstance(d, dict):
+        return d
+    return {}
+
+
 class BlogService:
     """Service wrapping LangGraph execution and streaming for blog generation."""
 
@@ -37,8 +47,8 @@ class BlogService:
         analysis = to_dict(result.get("analysis", {}))
         plan = to_dict(result.get("plan", {}))
         research = to_dict(result.get("research", {}))
-        code = to_dict(result.get("code", {}))
-        images = to_dict(result.get("images", {}))
+        code = extract_dict(result.get("code", {}))
+        images = extract_dict(result.get("images", {}))
         blog = result.get("final_blog", "")
 
         # Save into in-memory store
@@ -112,8 +122,8 @@ class BlogService:
             analysis = to_dict(accumulated_state.get("analysis", {}))
             plan = to_dict(accumulated_state.get("plan", {}))
             research = to_dict(accumulated_state.get("research", {}))
-            code = to_dict(accumulated_state.get("code", {}))
-            images = to_dict(accumulated_state.get("images", {}))
+            code = extract_dict(accumulated_state.get("code", {}))
+            images = extract_dict(accumulated_state.get("images", {}))
             blog = accumulated_state.get("final_blog", "")
 
             # Update final record in in-memory job store
