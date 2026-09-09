@@ -156,7 +156,14 @@ def get_blog_images(blog_id: str, store: JobStore = Depends(get_job_store)):
             detail=f"Blog with ID '{blog_id}' not found.",
         )
     
-    images_dict = blog.get("images", {}) or {}
+    images_raw = blog.get("images", {}) or {}
+    if isinstance(images_raw, list) and len(images_raw) > 0:
+        images_dict = images_raw[0] if isinstance(images_raw[0], dict) else {}
+    elif isinstance(images_raw, dict):
+        images_dict = images_raw
+    else:
+        images_dict = {}
+
     metadata_list: List[ImageMetadataItem] = []
 
     for section_title, img_info in images_dict.items():
